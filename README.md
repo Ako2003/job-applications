@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Job Application Tracker
 
-## Getting Started
+Personal web app to track job applications across boards (Indeed, Stepstone, Glassdoor, Xing, LinkedIn, Djinni, etc.). Single user, manual entry, CV files in Cloudflare R2.
 
-First, run the development server:
+See `PROMPT.md` for the full project brief and `CLAUDE.md` for code conventions.
+
+## Quick start
 
 ```bash
+# 1. Install
+npm install
+
+# 2. Set up Neon (Frankfurt region recommended)
+# Create a project at neon.tech, copy both pooled and direct URLs to .env
+
+# 3. Set up Cloudflare R2
+# Cloudflare dashboard → R2 → Create bucket (e.g. "job-tracker")
+# Cloudflare dashboard → R2 → Manage API tokens → Create token
+#   Permissions: Object Read & Write
+#   Specify bucket: your bucket
+# Copy account id, access key id, and secret to .env
+
+# 4. Configure environment
+cp .env.example .env
+# Fill in:
+#   - DATABASE_URL + DIRECT_URL (Neon)
+#   - APP_PASSWORD (your login password)
+#   - SESSION_SECRET (openssl rand -base64 32)
+#   - SEED_USER_EMAIL + SEED_USER_NAME
+#   - R2_ACCOUNT_ID + R2_ACCESS_KEY_ID + R2_SECRET_ACCESS_KEY + R2_BUCKET
+
+# 5. Database
+npm run db:generate
+npm run db:migrate
+npm run db:seed         # creates your single User row
+
+# 6. Run
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit `http://localhost:3000`, log in with `APP_PASSWORD`, you're in.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Push to GitHub, import on Vercel, paste the same env vars, deploy. Database migrations: run `npx prisma migrate deploy` as a Vercel build step or manually after schema changes.
 
-## Learn More
+Cost target: $0/month on Vercel Hobby + Neon Free + Cloudflare R2 Free.
 
-To learn more about Next.js, take a look at the following resources:
+## Workflow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **New application:** **Applications → New**, fill the form (company autocomplete, sensible defaults), pick which CV you sent, save.
+- **Update status:** change the dropdown on the applications list — an event is logged automatically.
+- **See what's working:** **Dashboard** breaks down response rate by source and by CV template.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Tech
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Next.js 15 · TypeScript · PostgreSQL (Neon) · Prisma · custom cookie auth (`jose`) · Tailwind v4 · shadcn/ui · Cloudflare R2 (`@aws-sdk/client-s3`).
