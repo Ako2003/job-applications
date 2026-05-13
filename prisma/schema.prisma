@@ -90,6 +90,13 @@ enum Language {
   OTHER
 }
 
+enum DocumentType {
+  COVER_LETTER
+  RECOMMENDATION
+  PORTFOLIO
+  CERTIFICATE
+}
+
 // ---------- User (seeded with a single row) ----------
 
 model User {
@@ -103,6 +110,7 @@ model User {
   applications Application[]
   cvTemplates  CVTemplate[]
   contacts     Contact[]
+  documents    Document[]
 }
 
 // ---------- Domain ----------
@@ -191,6 +199,7 @@ model Application {
   cvTemplate CVTemplate?        @relation(fields: [cvTemplateId], references: [id], onDelete: SetNull)
   events     ApplicationEvent[]
   contacts   Contact[]
+  documents  Document[]
 
   @@index([userId, status])
   @@index([userId, appliedAt])
@@ -233,4 +242,25 @@ model Contact {
   @@index([userId])
   @@index([companyId])
   @@index([applicationId])
+}
+
+model Document {
+  id          String       @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  type        DocumentType
+
+  // R2 storage: only the object key is stored. Signed URLs are generated on demand.
+  storageKey  String       // e.g. "documents/cover_letter/abc123.pdf"
+  fileSize    Int?         // bytes
+  contentType String       @default("application/pdf")
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applications Application[]
+
+  @@index([userId, type])
 }

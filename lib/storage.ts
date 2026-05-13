@@ -37,10 +37,12 @@ function generateStorageKey(): string {
   return `cvs/${id}.pdf`;
 }
 
-export type UploadCvResult = {
+export type UploadResult = {
   key: string;
   size: number;
 };
+
+export type UploadCvResult = UploadResult;
 
 /**
  * Uploads a CV PDF to R2
@@ -106,6 +108,94 @@ export async function deleteCv(key: string): Promise<void> {
  * @returns A signed URL valid for ~5 minutes
  */
 export async function getCvDownloadUrl(key: string): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+  });
+
+  const url = await getSignedUrl(s3Client, command, {
+    expiresIn: SIGNED_URL_EXPIRY,
+  });
+
+  return url;
+}
+
+/**
+ * Generates a unique storage key for a document
+ * @param documentType - The type of document (e.g., 'cover_letter', 'recommendation')
+ */
+function generateDocumentStorageKey(documentType: string): string {
+  const id = crypto.randomUUID();
+  const typePath = documentType.toLowerCase();
+  return `documents/${typePath}/${id}.pdf`;
+}
+
+/**
+ * Uploads a document PDF to R2
+ * @param buffer - The file buffer
+ * @param contentType - The content type (must be application/pdf)
+ * @param documentType - The type of document for storage path
+ * @returns The storage key and file size
+ * @throws Error if validation fails
+ */
+export async function uploadDocument(
+  buffer: Buffer,
+  contentType: string,
+  documentType: string
+): Promise<UploadResult> {
+  // Validate content type
+  if (contentType !== "application/pdf") {
+    throw new Error("Only PDF files are allowed");
+  }
+
+  // Validate file size
+  if (buffer.length > MAX_FILE_SIZE) {
+    throw new Error(
+      `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB`
+    );
+  }
+
+  // Validate file content (check magic bytes)
+  if (!isPdf(buffer)) {
+    throw new Error("Invalid PDF file");
+  }
+
+  const key = generateDocumentStorageKey(documentType);
+
+  await s3Client.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "application/pdf",
+    })
+  );
+
+  return {
+    key,
+    size: buffer.length,
+  };
+}
+
+/**
+ * Deletes a document from R2
+ * @param key - The storage key
+ */
+export async function deleteDocument(key: string): Promise<void> {
+  await s3Client.send(
+    new DeleteObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    })
+  );
+}
+
+/**
+ * Gets a signed download URL for a document
+ * @param key - The storage key
+ * @returns A signed URL valid for ~5 minutes
+ */
+export async function getDocumentDownloadUrl(key: string): Promise<string> {
   const command = new GetObjectCommand({
     Bucket: BUCKET,
     Key: key,

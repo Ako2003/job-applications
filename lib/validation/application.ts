@@ -162,6 +162,7 @@ export const applicationSchema = z.object({
   currency: z.string().length(3).optional().or(z.literal("")),
 
   cvTemplateId: z.string().optional().or(z.literal("")),
+  documentIds: z.array(z.string()).optional().default([]),
   coverLetter: z.string().optional().or(z.literal("")),
 
   status: applicationStatusEnum.default("APPLIED"),
@@ -208,6 +209,7 @@ export function transformApplicationInput(input: ApplicationInput) {
     salaryMax: input.salaryMax || null,
     currency: input.currency || null,
     cvTemplateId: input.cvTemplateId || null,
+    documentIds: input.documentIds || [],
     coverLetter: input.coverLetter || null,
     status: input.status,
     appliedAt: input.appliedAt,

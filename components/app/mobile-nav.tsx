@@ -8,6 +8,7 @@ import {
   FileText,
   Building2,
   Files,
+  FileStack,
   Settings,
   LogOut,
   Briefcase,
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/applications", label: "Applications", icon: FileText },
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/cvs", label: "CVs", icon: Files },
+  { href: "/documents", label: "Documents", icon: FileStack },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

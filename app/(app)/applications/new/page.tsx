@@ -2,6 +2,7 @@ import {
   getCompaniesForSelect,
   getCvTemplatesForSelect,
 } from "@/lib/actions/application";
+import { getDocumentsForSelect } from "@/lib/actions/document";
 import { ApplicationForm } from "@/components/app/application-form";
 
 type Props = {
@@ -11,9 +12,10 @@ type Props = {
 export default async function NewApplicationPage({ searchParams }: Props) {
   const { companyId } = await searchParams;
 
-  const [companies, cvTemplates] = await Promise.all([
+  const [companies, cvTemplates, documents] = await Promise.all([
     getCompaniesForSelect(),
     getCvTemplatesForSelect(),
+    getDocumentsForSelect(),
   ]);
 
   return (
@@ -29,6 +31,7 @@ export default async function NewApplicationPage({ searchParams }: Props) {
         <ApplicationForm
           companies={companies}
           cvTemplates={cvTemplates}
+          documents={documents}
           preselectedCompanyId={companyId}
         />
       </div>

@@ -4,6 +4,7 @@ import {
   getCompaniesForSelect,
   getCvTemplatesForSelect,
 } from "@/lib/actions/application";
+import { getDocumentsForSelect } from "@/lib/actions/document";
 import { ApplicationForm } from "@/components/app/application-form";
 
 type Props = {
@@ -13,10 +14,11 @@ type Props = {
 export default async function EditApplicationPage({ params }: Props) {
   const { id } = await params;
 
-  const [application, companies, cvTemplates] = await Promise.all([
+  const [application, companies, cvTemplates, documents] = await Promise.all([
     getApplication(id),
     getCompaniesForSelect(),
     getCvTemplatesForSelect(),
+    getDocumentsForSelect(),
   ]);
 
   if (!application) {
@@ -36,6 +38,7 @@ export default async function EditApplicationPage({ params }: Props) {
         <ApplicationForm
           companies={companies}
           cvTemplates={cvTemplates}
+          documents={documents}
           application={application}
         />
       </div>

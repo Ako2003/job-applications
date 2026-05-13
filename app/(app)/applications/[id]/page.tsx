@@ -7,6 +7,7 @@ import {
   Briefcase,
   Calendar,
   FileText,
+  FileStack,
   DollarSign,
   Download,
 } from "lucide-react";
@@ -20,7 +21,8 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { getApplication } from "@/lib/actions/application";
-import { getCvDownloadUrl } from "@/lib/storage";
+import { getCvDownloadUrl, getDocumentDownloadUrl } from "@/lib/storage";
+import { getDocumentTypeLabel } from "@/lib/validation/document";
 import {
   SOURCE_OPTIONS,
   REMOTE_POLICY_OPTIONS,
@@ -89,6 +91,17 @@ export default async function ApplicationDetailPage({ params }: Props) {
   let cvPreviewUrl: string | null = null;
   if (application.cvTemplate?.storageKey) {
     cvPreviewUrl = await getCvDownloadUrl(application.cvTemplate.storageKey);
+  }
+
+  // Get document URLs
+  const documentUrls = new Map<string, string>();
+  if (application.documents.length > 0) {
+    await Promise.all(
+      application.documents.map(async (doc) => {
+        const url = await getDocumentDownloadUrl(doc.storageKey);
+        documentUrls.set(doc.id, url);
+      })
+    );
   }
 
   return (
@@ -297,6 +310,54 @@ export default async function ApplicationDetailPage({ params }: Props) {
                     className="absolute inset-0 h-full w-full"
                     title="CV Preview"
                   />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Linked Documents */}
+          {application.documents.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <FileStack className="h-4 w-4" />
+                  Linked Documents
+                </CardTitle>
+                <CardDescription>
+                  {application.documents.length} document(s)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {application.documents.map((doc) => {
+                    const docUrl = documentUrls.get(doc.id);
+                    return (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between rounded-md border p-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {doc.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {getDocumentTypeLabel(doc.type)}
+                          </p>
+                        </div>
+                        {docUrl && (
+                          <Button variant="ghost" size="sm" asChild>
+                            <a
+                              href={docUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

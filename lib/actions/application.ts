@@ -118,6 +118,14 @@ export async function getApplication(id: string) {
           storageKey: true,
         },
       },
+      documents: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          storageKey: true,
+        },
+      },
       events: {
         select: {
           id: true,
@@ -166,6 +174,7 @@ export async function createApplication(
     salaryMax: formData.get("salaryMax") || undefined,
     currency: formData.get("currency") || "",
     cvTemplateId: formData.get("cvTemplateId") || "",
+    documentIds: formData.getAll("documentIds").filter(Boolean) as string[],
     coverLetter: formData.get("coverLetter") || "",
     status: formData.get("status") || "APPLIED",
     appliedAt: formData.get("appliedAt") || new Date().toISOString(),
@@ -183,7 +192,7 @@ export async function createApplication(
     };
   }
 
-  const data = transformApplicationInput(parsed.data);
+  const { documentIds, ...data } = transformApplicationInput(parsed.data);
 
   // Create application with initial event in a transaction
   const application = await db.$transaction(async (tx) => {
@@ -191,6 +200,9 @@ export async function createApplication(
       data: {
         ...data,
         userId: user.id,
+        documents: documentIds.length > 0
+          ? { connect: documentIds.map((id) => ({ id })) }
+          : undefined,
       },
       select: { id: true, status: true, appliedAt: true },
     });
@@ -222,7 +234,7 @@ export async function updateApplication(
   // Verify ownership
   const existing = await db.application.findUnique({
     where: { id, userId: user.id },
-    select: { id: true },
+    select: { id: true, documents: { select: { id: true } } },
   });
 
   if (!existing) {
@@ -244,6 +256,7 @@ export async function updateApplication(
     salaryMax: formData.get("salaryMax") || undefined,
     currency: formData.get("currency") || "",
     cvTemplateId: formData.get("cvTemplateId") || "",
+    documentIds: formData.getAll("documentIds").filter(Boolean) as string[],
     coverLetter: formData.get("coverLetter") || "",
     status: formData.get("status"),
     appliedAt: formData.get("appliedAt"),
@@ -261,11 +274,18 @@ export async function updateApplication(
     };
   }
 
-  const data = transformApplicationInput(parsed.data);
+  const { documentIds, ...data } = transformApplicationInput(parsed.data);
 
+  // Update application with document relations
   await db.application.update({
     where: { id },
-    data,
+    data: {
+      ...data,
+      documents: {
+        disconnect: existing.documents.map((doc) => ({ id: doc.id })),
+        connect: documentIds.map((docId) => ({ id: docId })),
+      },
+    },
   });
 
   revalidatePath("/applications");

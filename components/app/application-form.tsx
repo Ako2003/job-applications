@@ -15,6 +15,11 @@ import {
 } from "@/components/ui/select";
 import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import {
+  MultiSelectCombobox,
+  type MultiSelectOption,
+} from "@/components/ui/multi-select-combobox";
+import { getDocumentTypeLabel } from "@/lib/validation/document";
+import {
   createApplication,
   updateApplication,
   type ApplicationFormState,
@@ -39,6 +44,12 @@ type CvTemplate = {
   language: string;
 };
 
+type Document = {
+  id: string;
+  name: string;
+  type: string;
+};
+
 type Application = {
   id: string;
   role: string;
@@ -61,11 +72,13 @@ type Application = {
   notes: string | null;
   company: { id: string };
   cvTemplate: { id: string } | null;
+  documents?: { id: string }[];
 };
 
 type ApplicationFormProps = {
   companies: Company[];
   cvTemplates: CvTemplate[];
+  documents: Document[];
   application?: Application;
   preselectedCompanyId?: string;
 };
@@ -75,6 +88,7 @@ const initialState: ApplicationFormState = {};
 export function ApplicationForm({
   companies,
   cvTemplates,
+  documents,
   application,
   preselectedCompanyId,
 }: ApplicationFormProps) {
@@ -104,6 +118,15 @@ export function ApplicationForm({
     label: cv.name,
     description: cv.language,
   }));
+
+  const documentOptions: MultiSelectOption[] = documents.map((doc) => ({
+    value: doc.id,
+    label: doc.name,
+    group: getDocumentTypeLabel(doc.type),
+  }));
+
+  const defaultDocumentIds =
+    application?.documents?.map((doc) => doc.id) || [];
 
   return (
     <form action={formAction} className="space-y-8">
@@ -392,6 +415,24 @@ export function ApplicationForm({
             />
           </div>
         </div>
+
+        {documentOptions.length > 0 && (
+          <div className="space-y-2">
+            <Label htmlFor="documentIds">Linked Documents</Label>
+            <MultiSelectCombobox
+              name="documentIds"
+              options={documentOptions}
+              defaultValue={defaultDocumentIds}
+              placeholder="Select documents..."
+              searchPlaceholder="Search documents..."
+              emptyText="No documents found."
+              disabled={isPending}
+            />
+            <p className="text-xs text-muted-foreground">
+              Attach cover letters, recommendations, or other documents to this application.
+            </p>
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="coverLetter">Cover Letter Notes</Label>
