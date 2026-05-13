@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import {
   createApplication,
   updateApplication,
@@ -93,6 +94,17 @@ export function ApplicationForm({
   const defaultCompanyId =
     application?.company.id || preselectedCompanyId || "";
 
+  const companyOptions: ComboboxOption[] = companies.map((company) => ({
+    value: company.id,
+    label: company.name,
+  }));
+
+  const cvTemplateOptions: ComboboxOption[] = cvTemplates.map((cv) => ({
+    value: cv.id,
+    label: cv.name,
+    description: cv.language,
+  }));
+
   return (
     <form action={formAction} className="space-y-8">
       {state.error && (
@@ -109,22 +121,15 @@ export function ApplicationForm({
             <Label htmlFor="companyId">
               Company <span className="text-destructive">*</span>
             </Label>
-            <Select
+            <Combobox
               name="companyId"
+              options={companyOptions}
               defaultValue={defaultCompanyId}
+              placeholder="Select company..."
+              searchPlaceholder="Search companies..."
+              emptyText="No companies found."
               disabled={isPending}
-            >
-              <SelectTrigger id="companyId">
-                <SelectValue placeholder="Select company..." />
-              </SelectTrigger>
-              <SelectContent>
-                {companies.map((company) => (
-                  <SelectItem key={company.id} value={company.id}>
-                    {company.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
             {state.fieldErrors?.companyId && (
               <p className="text-sm text-destructive">
                 {state.fieldErrors.companyId[0]}
@@ -321,22 +326,15 @@ export function ApplicationForm({
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="cvTemplateId">CV Template</Label>
-            <Select
+            <Combobox
               name="cvTemplateId"
+              options={cvTemplateOptions}
               defaultValue={application?.cvTemplate?.id ?? ""}
+              placeholder="Select CV..."
+              searchPlaceholder="Search CVs..."
+              emptyText="No CVs found."
               disabled={isPending}
-            >
-              <SelectTrigger id="cvTemplateId">
-                <SelectValue placeholder="Select CV..." />
-              </SelectTrigger>
-              <SelectContent>
-                {cvTemplates.map((cv) => (
-                  <SelectItem key={cv.id} value={cv.id}>
-                    {cv.name} ({cv.language})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            />
           </div>
 
           <div className="space-y-2">

@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
 import {
   APPLICATION_STATUS_OPTIONS,
   SOURCE_OPTIONS,
@@ -45,6 +46,22 @@ export function Filters({ companies, cvTemplates }: FiltersProps) {
 
   const hasFilters =
     currentStatus || currentSource || currentCompany || currentCv || currentSearch;
+
+  const companyOptions: ComboboxOption[] = [
+    { value: "", label: "All companies" },
+    ...companies.map((company) => ({
+      value: company.id,
+      label: company.name,
+    })),
+  ];
+
+  const cvOptions: ComboboxOption[] = [
+    { value: "", label: "All CVs" },
+    ...cvTemplates.map((cv) => ({
+      value: cv.id,
+      label: cv.name,
+    })),
+  ];
 
   const updateFilter = useCallback(
     (key: string, value: string) => {
@@ -136,44 +153,30 @@ export function Filters({ companies, cvTemplates }: FiltersProps) {
 
         {/* Company filter */}
         {companies.length > 0 && (
-          <Select
+          <Combobox
+            options={companyOptions}
             value={currentCompany}
-            onValueChange={(value) => updateFilter("companyId", value ?? "")}
+            onValueChange={(value) => updateFilter("companyId", value)}
+            placeholder="All companies"
+            searchPlaceholder="Search companies..."
+            emptyText="No companies found."
             disabled={isPending}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="All companies" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All companies</SelectItem>
-              {companies.map((company) => (
-                <SelectItem key={company.id} value={company.id}>
-                  {company.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className="w-[150px]"
+          />
         )}
 
         {/* CV filter */}
         {cvTemplates.length > 0 && (
-          <Select
+          <Combobox
+            options={cvOptions}
             value={currentCv}
-            onValueChange={(value) => updateFilter("cvTemplateId", value ?? "")}
+            onValueChange={(value) => updateFilter("cvTemplateId", value)}
+            placeholder="All CVs"
+            searchPlaceholder="Search CVs..."
+            emptyText="No CVs found."
             disabled={isPending}
-          >
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="All CVs" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All CVs</SelectItem>
-              {cvTemplates.map((cv) => (
-                <SelectItem key={cv.id} value={cv.id}>
-                  {cv.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className="w-[150px]"
+          />
         )}
 
         {/* Clear filters */}
