@@ -133,7 +133,7 @@ export default async function ApplicationDetailPage({ params }: Props) {
             </Link>
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <StatusSelect
             applicationId={application.id}
             currentStatus={application.status}

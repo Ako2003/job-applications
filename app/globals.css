@@ -149,3 +149,11 @@
     @apply font-sans;
   }
 }
+
+/* Ensure text is dark on primary (orange) backgrounds for readability */
+@layer utilities {
+  .hover\:bg-primary:hover,
+  .bg-primary {
+    color: var(--primary-foreground);
+  }
+}

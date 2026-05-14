@@ -24,12 +24,14 @@ import {
   getApplicationsOverTime,
   getTimeToFirstResponse,
   getRecentApplications,
+  getApplicationsByCountry,
 } from "@/lib/actions/dashboard";
 import { requireUser } from "@/lib/auth";
 import { SOURCE_OPTIONS } from "@/lib/validation/application";
 import { FunnelChart } from "./funnel-chart";
 import { TimelineChart } from "./timeline-chart";
 import { ResponseRateChart } from "./response-rate-chart";
+import { CountryChart } from "./country-chart";
 
 function getSourceLabel(source: string): string {
   return SOURCE_OPTIONS.find((s) => s.value === source)?.label ?? source;
@@ -53,6 +55,7 @@ export default async function DashboardPage() {
     timelineData,
     timeToResponse,
     recentApplications,
+    countryData,
   ] = await Promise.all([
     getDashboardStats(),
     getFunnelData(),
@@ -61,6 +64,7 @@ export default async function DashboardPage() {
     getApplicationsOverTime(),
     getTimeToFirstResponse(),
     getRecentApplications(),
+    getApplicationsByCountry(),
   ]);
 
   return (
@@ -243,6 +247,23 @@ export default async function DashboardPage() {
                   rate: r.rate,
                 }))}
               />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Applications by country */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Applications by Country</CardTitle>
+            <CardDescription>Geographic distribution of your applications</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {countryData.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No applications with country data yet.
+              </p>
+            ) : (
+              <CountryChart data={countryData} />
             )}
           </CardContent>
         </Card>

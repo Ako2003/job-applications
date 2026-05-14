@@ -21,6 +21,7 @@ import {
   REMOTE_POLICY_OPTIONS,
 } from "@/lib/validation/application";
 import { StatusBadge } from "@/components/app/status-badge";
+import { SortableHeader } from "@/components/app/sortable-header";
 import { StatusSelect } from "./status-select";
 import { Filters } from "./filters";
 
@@ -47,6 +48,8 @@ type SearchParams = {
   companyId?: string;
   cvTemplateId?: string;
   search?: string;
+  sort?: string;
+  order?: string;
 };
 
 type Props = {
@@ -63,6 +66,8 @@ export default async function ApplicationsPage({ searchParams }: Props) {
       companyId: params.companyId,
       cvTemplateId: params.cvTemplateId,
       search: params.search,
+      sort: params.sort,
+      order: params.order,
     }),
     getCompaniesForSelect(),
     getCvTemplatesForSelect(),
@@ -151,13 +156,23 @@ export default async function ApplicationsPage({ searchParams }: Props) {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Company</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead>
+                    <SortableHeader column="company" label="Company" basePath="/applications" />
+                  </TableHead>
+                  <TableHead>
+                    <SortableHeader column="role" label="Role" basePath="/applications" />
+                  </TableHead>
+                  <TableHead>
+                    <SortableHeader column="status" label="Status" basePath="/applications" />
+                  </TableHead>
+                  <TableHead>
+                    <SortableHeader column="source" label="Source" basePath="/applications" />
+                  </TableHead>
                   <TableHead>Location</TableHead>
                   <TableHead>CV</TableHead>
-                  <TableHead>Applied</TableHead>
+                  <TableHead>
+                    <SortableHeader column="appliedAt" label="Applied" basePath="/applications" />
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

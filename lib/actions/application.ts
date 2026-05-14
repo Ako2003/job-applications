@@ -19,6 +19,8 @@ export async function getApplications(filters?: {
   companyId?: string;
   cvTemplateId?: string;
   search?: string;
+  sort?: string;
+  order?: string;
 }) {
   const user = await requireUser();
 
@@ -46,6 +48,28 @@ export async function getApplications(filters?: {
     ];
   }
 
+  // Build orderBy based on sort param
+  const sortOrder: "asc" | "desc" = filters?.order === "asc" ? "asc" : "desc";
+  let orderBy: Prisma.ApplicationOrderByWithRelationInput = { appliedAt: "desc" };
+
+  switch (filters?.sort) {
+    case "company":
+      orderBy = { company: { name: sortOrder } };
+      break;
+    case "role":
+      orderBy = { role: sortOrder };
+      break;
+    case "status":
+      orderBy = { status: sortOrder };
+      break;
+    case "source":
+      orderBy = { source: sortOrder };
+      break;
+    case "appliedAt":
+      orderBy = { appliedAt: sortOrder };
+      break;
+  }
+
   return db.application.findMany({
     where,
     select: {
@@ -70,7 +94,7 @@ export async function getApplications(filters?: {
         },
       },
     },
-    orderBy: { appliedAt: "desc" },
+    orderBy,
   });
 }
 

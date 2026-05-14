@@ -270,3 +270,21 @@ export async function getRecentApplications() {
     take: 5,
   });
 }
+
+export async function getApplicationsByCountry() {
+  const user = await requireUser();
+
+  const applications = await db.application.groupBy({
+    by: ["country"],
+    where: { userId: user.id, country: { not: null } },
+    _count: { id: true },
+  });
+
+  return applications
+    .filter((app) => app.country !== null)
+    .map((app) => ({
+      country: app.country!,
+      count: app._count.id,
+    }))
+    .sort((a, b) => b.count - a.count);
+}
