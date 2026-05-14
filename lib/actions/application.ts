@@ -435,6 +435,87 @@ export async function addApplicationEvent(
   return {};
 }
 
+// Duplicate an application
+export async function duplicateApplication(id: string): Promise<{ id?: string; error?: string }> {
+  const user = await requireUser();
+
+  const existing = await db.application.findUnique({
+    where: { id, userId: user.id },
+    select: {
+      role: true,
+      jobUrl: true,
+      source: true,
+      sourceListingId: true,
+      location: true,
+      country: true,
+      remote: true,
+      employment: true,
+      language: true,
+      salaryMin: true,
+      salaryMax: true,
+      currency: true,
+      coverLetter: true,
+      jobDescription: true,
+      notes: true,
+      companyId: true,
+      cvTemplateId: true,
+      documents: { select: { id: true } },
+    },
+  });
+
+  if (!existing) {
+    return { error: "Application not found" };
+  }
+
+  // Create duplicate with "Copy" suffix and today's date
+  const duplicate = await db.$transaction(async (tx) => {
+    const app = await tx.application.create({
+      data: {
+        userId: user.id,
+        role: `${existing.role} (Copy)`,
+        jobUrl: existing.jobUrl,
+        source: existing.source,
+        sourceListingId: null, // Reset listing ID
+        location: existing.location,
+        country: existing.country,
+        remote: existing.remote,
+        employment: existing.employment,
+        language: existing.language,
+        salaryMin: existing.salaryMin,
+        salaryMax: existing.salaryMax,
+        currency: existing.currency,
+        coverLetter: existing.coverLetter,
+        jobDescription: existing.jobDescription,
+        notes: existing.notes,
+        companyId: existing.companyId,
+        cvTemplateId: existing.cvTemplateId,
+        status: "APPLIED",
+        appliedAt: new Date(),
+        documents: existing.documents.length > 0
+          ? { connect: existing.documents.map((doc) => ({ id: doc.id })) }
+          : undefined,
+      },
+      select: { id: true, status: true, appliedAt: true },
+    });
+
+    // Create initial "APPLIED" event
+    await tx.applicationEvent.create({
+      data: {
+        applicationId: app.id,
+        type: "APPLIED",
+        occurredAt: app.appliedAt,
+      },
+    });
+
+    return app;
+  });
+
+  revalidatePath("/applications");
+  revalidatePath("/dashboard");
+
+  return { id: duplicate.id };
+}
+
 // Get companies for autocomplete
 export async function getCompaniesForSelect() {
   const user = await requireUser();

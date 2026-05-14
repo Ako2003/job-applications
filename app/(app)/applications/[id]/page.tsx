@@ -32,6 +32,7 @@ import {
 import { LANGUAGE_OPTIONS } from "@/lib/validation/cv-template";
 import { StatusSelect } from "../status-select";
 import { DeleteApplicationButton } from "./delete-button";
+import { DuplicateButton } from "./duplicate-button";
 import { AddEventDialog } from "./add-event-dialog";
 
 type Props = {
@@ -144,6 +145,7 @@ export default async function ApplicationDetailPage({ params }: Props) {
               Edit
             </Link>
           </Button>
+          <DuplicateButton applicationId={application.id} />
           <DeleteApplicationButton applicationId={application.id} />
         </div>
       </div>
