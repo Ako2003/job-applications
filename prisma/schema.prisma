@@ -183,9 +183,12 @@ model Application {
   cvTemplateId String?
   coverLetter  String? @db.Text
 
-  status       ApplicationStatus @default(APPLIED)
-  appliedAt    DateTime          @default(now())
-  nextActionAt DateTime?
+  status          ApplicationStatus @default(APPLIED)
+  appliedAt       DateTime          @default(now())
+  nextActionAt    DateTime?
+  rejectedAt      DateTime?
+  rejectionReason String?           // "No response", "Skills mismatch", "Experience level", etc.
+  rejectionStage  String?           // Stage at which rejected: "Application", "Screening", "Interview", etc.
 
   jobDescription  String?  @db.Text
   keyRequirements String[] // optional tech/skill bullets you record yourself

@@ -69,12 +69,41 @@ type Application = {
   status: string;
   appliedAt: Date;
   nextActionAt: Date | null;
+  rejectedAt: Date | null;
+  rejectionReason: string | null;
+  rejectionStage: string | null;
   jobDescription: string | null;
   notes: string | null;
   company: { id: string };
   cvTemplate: { id: string } | null;
   documents?: { id: string }[];
 };
+
+const REJECTION_REASON_OPTIONS = [
+  { value: "no_response", label: "No response / Ghosted" },
+  { value: "skills_mismatch", label: "Skills mismatch" },
+  { value: "experience_level", label: "Experience level (over/under qualified)" },
+  { value: "culture_fit", label: "Culture fit" },
+  { value: "salary_expectations", label: "Salary expectations" },
+  { value: "position_filled", label: "Position filled" },
+  { value: "company_freeze", label: "Hiring freeze" },
+  { value: "location", label: "Location / Remote policy" },
+  { value: "language", label: "Language requirements" },
+  { value: "visa_sponsorship", label: "Visa / Work permit issues" },
+  { value: "technical_assessment", label: "Failed technical assessment" },
+  { value: "interview_performance", label: "Interview performance" },
+  { value: "other", label: "Other" },
+] as const;
+
+const REJECTION_STAGE_OPTIONS = [
+  { value: "application", label: "Application (Auto-rejected)" },
+  { value: "screening", label: "CV Screening" },
+  { value: "recruiter_call", label: "Recruiter Call" },
+  { value: "phone_interview", label: "Phone Interview" },
+  { value: "technical_interview", label: "Technical Interview" },
+  { value: "onsite", label: "Onsite / Final Round" },
+  { value: "offer_stage", label: "Offer Stage" },
+] as const;
 
 type ApplicationFormProps = {
   companies: Company[];
@@ -463,6 +492,69 @@ export function ApplicationForm({
           </div>
         </CardContent>
       </Card>
+
+      {/* Rejection Info - Only show when editing a rejected application */}
+      {isEditing && application?.status === "REJECTED" && (
+        <Card className="border-destructive/50">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg text-destructive">Rejection Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="rejectedAt">Rejected Date</Label>
+                <Input
+                  id="rejectedAt"
+                  name="rejectedAt"
+                  type="date"
+                  defaultValue={formatDateForInput(application?.rejectedAt)}
+                  disabled={isPending}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rejectionStage">Rejection Stage</Label>
+                <Select
+                  name="rejectionStage"
+                  defaultValue={application?.rejectionStage ?? ""}
+                  disabled={isPending}
+                >
+                  <SelectTrigger id="rejectionStage">
+                    <SelectValue placeholder="At which stage?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REJECTION_STAGE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rejectionReason">Rejection Reason</Label>
+                <Select
+                  name="rejectionReason"
+                  defaultValue={application?.rejectionReason ?? ""}
+                  disabled={isPending}
+                >
+                  <SelectTrigger id="rejectionReason">
+                    <SelectValue placeholder="Why rejected?" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REJECTION_REASON_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Notes */}
       <Card>

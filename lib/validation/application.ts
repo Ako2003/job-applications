@@ -169,6 +169,11 @@ export const applicationSchema = z.object({
   appliedAt: z.coerce.date(),
   nextActionAt: z.coerce.date().optional(),
 
+  // Rejection tracking
+  rejectedAt: z.coerce.date().optional(),
+  rejectionReason: z.string().optional().or(z.literal("")),
+  rejectionStage: z.string().optional().or(z.literal("")),
+
   jobDescription: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
 });
@@ -214,6 +219,9 @@ export function transformApplicationInput(input: ApplicationInput) {
     status: input.status,
     appliedAt: input.appliedAt,
     nextActionAt: input.nextActionAt || null,
+    rejectedAt: input.rejectedAt || null,
+    rejectionReason: input.rejectionReason || null,
+    rejectionStage: input.rejectionStage || null,
     jobDescription: input.jobDescription || null,
     notes: input.notes || null,
   };

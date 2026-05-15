@@ -11,6 +11,7 @@ import {
   Settings,
   LogOut,
   Briefcase,
+  BarChart3,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/applications", label: "Applications", icon: FileText },
   { href: "/companies", label: "Companies", icon: Building2 },
+  { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/cvs", label: "CVs", icon: Files },
   { href: "/documents", label: "Documents", icon: FileStack },
   { href: "/settings", label: "Settings", icon: Settings },

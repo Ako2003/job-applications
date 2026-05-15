@@ -139,6 +139,9 @@ export async function getApplication(id: string) {
       status: true,
       appliedAt: true,
       nextActionAt: true,
+      rejectedAt: true,
+      rejectionReason: true,
+      rejectionStage: true,
       jobDescription: true,
       keyRequirements: true,
       notes: true,
@@ -303,6 +306,9 @@ export async function updateApplication(
     status: formData.get("status"),
     appliedAt: formData.get("appliedAt"),
     nextActionAt: formData.get("nextActionAt") || undefined,
+    rejectedAt: formData.get("rejectedAt") || undefined,
+    rejectionReason: formData.get("rejectionReason") || "",
+    rejectionStage: formData.get("rejectionStage") || "",
     jobDescription: formData.get("jobDescription") || "",
     notes: formData.get("notes") || "",
   };
@@ -333,6 +339,7 @@ export async function updateApplication(
   revalidatePath("/applications");
   revalidatePath(`/applications/${id}`);
   revalidatePath("/dashboard");
+  revalidatePath("/analytics");
   redirect(`/applications/${id}`);
 }
 
