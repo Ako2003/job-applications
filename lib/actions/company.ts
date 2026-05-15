@@ -4,31 +4,75 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import type { Prisma } from "@prisma/client";
 import {
   companySchema,
   transformCompanyInput,
 } from "@/lib/validation/company";
 
-export async function getCompanies() {
+const ITEMS_PER_PAGE = 10;
+
+export async function getCompanies(options?: {
+  sort?: string;
+  order?: string;
+  page?: number;
+}) {
   const user = await requireUser();
 
-  return db.company.findMany({
-    where: { userId: user.id },
-    select: {
-      id: true,
-      name: true,
-      website: true,
-      industry: true,
-      sizeBand: true,
-      hqCity: true,
-      hqCountry: true,
-      createdAt: true,
-      _count: {
-        select: { applications: true },
+  const page = options?.page || 1;
+  const skip = (page - 1) * ITEMS_PER_PAGE;
+
+  // Build orderBy based on sort param
+  const sortOrder: "asc" | "desc" = options?.order === "desc" ? "desc" : "asc";
+  let orderBy: Prisma.CompanyOrderByWithRelationInput = { name: "asc" };
+
+  switch (options?.sort) {
+    case "name":
+      orderBy = { name: sortOrder };
+      break;
+    case "industry":
+      orderBy = { industry: sortOrder };
+      break;
+    case "location":
+      orderBy = { hqCity: sortOrder };
+      break;
+    case "size":
+      orderBy = { sizeBand: sortOrder };
+      break;
+    case "applications":
+      orderBy = { applications: { _count: sortOrder } };
+      break;
+  }
+
+  const [companies, total] = await Promise.all([
+    db.company.findMany({
+      where: { userId: user.id },
+      select: {
+        id: true,
+        name: true,
+        website: true,
+        industry: true,
+        sizeBand: true,
+        hqCity: true,
+        hqCountry: true,
+        createdAt: true,
+        _count: {
+          select: { applications: true },
+        },
       },
-    },
-    orderBy: { name: "asc" },
-  });
+      orderBy,
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    db.company.count({ where: { userId: user.id } }),
+  ]);
+
+  return {
+    companies,
+    total,
+    totalPages: Math.ceil(total / ITEMS_PER_PAGE),
+    currentPage: page,
+  };
 }
 
 export async function getCompany(id: string) {

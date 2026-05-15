@@ -22,6 +22,7 @@ import {
 } from "@/lib/validation/application";
 import { StatusBadge } from "@/components/app/status-badge";
 import { SortableHeader } from "@/components/app/sortable-header";
+import { Pagination } from "@/components/app/pagination";
 import { StatusSelect } from "./status-select";
 import { Filters } from "./filters";
 
@@ -50,6 +51,7 @@ type SearchParams = {
   search?: string;
   sort?: string;
   order?: string;
+  page?: string;
 };
 
 type Props = {
@@ -58,8 +60,9 @@ type Props = {
 
 export default async function ApplicationsPage({ searchParams }: Props) {
   const params = await searchParams;
+  const currentPage = params.page ? parseInt(params.page, 10) : 1;
 
-  const [applications, companies, cvTemplates] = await Promise.all([
+  const [applicationsData, companies, cvTemplates] = await Promise.all([
     getApplications({
       status: params.status,
       source: params.source,
@@ -68,16 +71,24 @@ export default async function ApplicationsPage({ searchParams }: Props) {
       search: params.search,
       sort: params.sort,
       order: params.order,
+      page: currentPage,
     }),
     getCompaniesForSelect(),
     getCvTemplatesForSelect(),
   ]);
 
+  const { applications, total, totalPages } = applicationsData;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Applications</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Applications{" "}
+            <span className="text-muted-foreground font-normal text-xl sm:text-2xl">
+              ({total})
+            </span>
+          </h1>
           <p className="text-muted-foreground">
             Track your job applications
           </p>
@@ -94,10 +105,10 @@ export default async function ApplicationsPage({ searchParams }: Props) {
         <Filters companies={companies} cvTemplates={cvTemplates} />
       </Suspense>
 
-      {applications.length === 0 ? (
+      {applications.length === 0 && total === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">
           <FileText className="h-12 w-12 text-muted-foreground/50" />
-          {Object.values(params).some(Boolean) ? (
+          {Object.values(params).some((v) => v && v !== "1") ? (
             <>
               <h3 className="mt-4 text-lg font-medium">No matching applications</h3>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -224,6 +235,12 @@ export default async function ApplicationsPage({ searchParams }: Props) {
               </TableBody>
             </Table>
           </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            basePath="/applications"
+          />
         </>
       )}
     </div>

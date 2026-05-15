@@ -13,6 +13,8 @@ import {
 } from "@/lib/validation/application";
 import type { ApplicationStatus, Prisma } from "@prisma/client";
 
+const ITEMS_PER_PAGE = 10;
+
 export async function getApplications(filters?: {
   status?: string;
   source?: string;
@@ -21,8 +23,12 @@ export async function getApplications(filters?: {
   search?: string;
   sort?: string;
   order?: string;
+  page?: number;
 }) {
   const user = await requireUser();
+
+  const page = filters?.page || 1;
+  const skip = (page - 1) * ITEMS_PER_PAGE;
 
   const where: Prisma.ApplicationWhereInput = {
     userId: user.id,
@@ -70,32 +76,44 @@ export async function getApplications(filters?: {
       break;
   }
 
-  return db.application.findMany({
-    where,
-    select: {
-      id: true,
-      role: true,
-      status: true,
-      source: true,
-      location: true,
-      remote: true,
-      appliedAt: true,
-      nextActionAt: true,
-      company: {
-        select: {
-          id: true,
-          name: true,
+  const [applications, total] = await Promise.all([
+    db.application.findMany({
+      where,
+      select: {
+        id: true,
+        role: true,
+        status: true,
+        source: true,
+        location: true,
+        remote: true,
+        appliedAt: true,
+        nextActionAt: true,
+        company: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        cvTemplate: {
+          select: {
+            id: true,
+            name: true,
+          },
         },
       },
-      cvTemplate: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
-    orderBy,
-  });
+      orderBy,
+      skip,
+      take: ITEMS_PER_PAGE,
+    }),
+    db.application.count({ where }),
+  ]);
+
+  return {
+    applications,
+    total,
+    totalPages: Math.ceil(total / ITEMS_PER_PAGE),
+    currentPage: page,
+  };
 }
 
 export async function getApplication(id: string) {
