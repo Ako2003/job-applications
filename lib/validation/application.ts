@@ -67,8 +67,22 @@ export const CURRENCY_OPTIONS = [
   { value: "USD", label: "USD ($)" },
   { value: "GBP", label: "GBP (£)" },
   { value: "CHF", label: "CHF" },
+  { value: "SEK", label: "SEK (kr)" },
+  { value: "NOK", label: "NOK (kr)" },
+  { value: "DKK", label: "DKK (kr)" },
+  { value: "PLN", label: "PLN (zł)" },
+  { value: "CZK", label: "CZK (Kč)" },
+  { value: "CAD", label: "CAD ($)" },
+  { value: "AUD", label: "AUD ($)" },
   { value: "AZN", label: "AZN (₼)" },
   { value: "UAH", label: "UAH (₴)" },
+  { value: "TRY", label: "TRY (₺)" },
+  { value: "INR", label: "INR (₹)" },
+  { value: "JPY", label: "JPY (¥)" },
+  { value: "CNY", label: "CNY (¥)" },
+  { value: "SGD", label: "SGD ($)" },
+  { value: "HKD", label: "HKD ($)" },
+  { value: "NZD", label: "NZD ($)" },
 ] as const;
 
 // Zod enums
@@ -198,6 +212,7 @@ export const statusUpdateSchema = z.object({
 export type StatusUpdateInput = z.infer<typeof statusUpdateSchema>;
 
 // Helper to transform application input for database
+// Converts salary from whole units to minor units (cents) for storage
 export function transformApplicationInput(input: ApplicationInput) {
   return {
     companyId: input.companyId,
@@ -210,8 +225,9 @@ export function transformApplicationInput(input: ApplicationInput) {
     remote: input.remote || null,
     employment: input.employment || null,
     language: input.language,
-    salaryMin: input.salaryMin || null,
-    salaryMax: input.salaryMax || null,
+    // Convert whole units to cents for storage
+    salaryMin: input.salaryMin ? Math.round(input.salaryMin * 100) : null,
+    salaryMax: input.salaryMax ? Math.round(input.salaryMax * 100) : null,
     currency: input.currency || null,
     cvTemplateId: input.cvTemplateId || null,
     documentIds: input.documentIds || [],
@@ -225,6 +241,12 @@ export function transformApplicationInput(input: ApplicationInput) {
     jobDescription: input.jobDescription || null,
     notes: input.notes || null,
   };
+}
+
+// Helper to convert salary from cents to whole units for display
+export function centsToWholeUnits(cents: number | null): number | null {
+  if (cents === null) return null;
+  return cents / 100;
 }
 
 // Helper to get status badge color

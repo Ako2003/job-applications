@@ -31,6 +31,7 @@ import {
   EMPLOYMENT_TYPE_OPTIONS,
   REMOTE_POLICY_OPTIONS,
   CURRENCY_OPTIONS,
+  centsToWholeUnits,
 } from "@/lib/validation/application";
 import { LANGUAGE_OPTIONS } from "@/lib/validation/cv-template";
 
@@ -336,28 +337,25 @@ export function ApplicationForm({
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="salaryMin">Salary Min (annual, in cents)</Label>
+              <Label htmlFor="salaryMin">Salary Min (annual)</Label>
               <Input
                 id="salaryMin"
                 name="salaryMin"
                 type="number"
-                defaultValue={application?.salaryMin ?? ""}
-                placeholder="5000000"
+                defaultValue={centsToWholeUnits(application?.salaryMin ?? null) ?? ""}
+                placeholder="50000"
                 disabled={isPending}
               />
-              <p className="text-xs text-muted-foreground">
-                Enter in minor units (e.g., 5000000 = €50,000)
-              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="salaryMax">Salary Max (annual, in cents)</Label>
+              <Label htmlFor="salaryMax">Salary Max (annual)</Label>
               <Input
                 id="salaryMax"
                 name="salaryMax"
                 type="number"
-                defaultValue={application?.salaryMax ?? ""}
-                placeholder="7000000"
+                defaultValue={centsToWholeUnits(application?.salaryMax ?? null) ?? ""}
+                placeholder="70000"
                 disabled={isPending}
               />
             </div>
