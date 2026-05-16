@@ -10,17 +10,21 @@ import {
   transformCompanyInput,
 } from "@/lib/validation/company";
 
-const ITEMS_PER_PAGE = 10;
+const DEFAULT_ITEMS_PER_PAGE = 10;
 
 export async function getCompanies(options?: {
   sort?: string;
   order?: string;
   page?: number;
+  perPage?: number | "all";
 }) {
   const user = await requireUser();
 
   const page = options?.page || 1;
-  const skip = (page - 1) * ITEMS_PER_PAGE;
+  const perPage = options?.perPage;
+  const isShowAll = perPage === "all";
+  const itemsPerPage = isShowAll ? undefined : (typeof perPage === "number" ? perPage : DEFAULT_ITEMS_PER_PAGE);
+  const skip = isShowAll ? undefined : (page - 1) * (itemsPerPage || DEFAULT_ITEMS_PER_PAGE);
 
   // Build orderBy based on sort param
   const sortOrder: "asc" | "desc" = options?.order === "desc" ? "desc" : "asc";
@@ -62,7 +66,7 @@ export async function getCompanies(options?: {
       },
       orderBy,
       skip,
-      take: ITEMS_PER_PAGE,
+      take: itemsPerPage,
     }),
     db.company.count({ where: { userId: user.id } }),
   ]);
@@ -70,8 +74,9 @@ export async function getCompanies(options?: {
   return {
     companies,
     total,
-    totalPages: Math.ceil(total / ITEMS_PER_PAGE),
-    currentPage: page,
+    totalPages: isShowAll ? 1 : Math.ceil(total / (itemsPerPage || DEFAULT_ITEMS_PER_PAGE)),
+    currentPage: isShowAll ? 1 : page,
+    perPage: isShowAll ? "all" as const : (itemsPerPage || DEFAULT_ITEMS_PER_PAGE),
   };
 }
 

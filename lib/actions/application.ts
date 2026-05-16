@@ -13,7 +13,7 @@ import {
 } from "@/lib/validation/application";
 import type { ApplicationStatus, Prisma } from "@prisma/client";
 
-const ITEMS_PER_PAGE = 10;
+const DEFAULT_ITEMS_PER_PAGE = 10;
 
 export async function getApplications(filters?: {
   status?: string;
@@ -24,11 +24,15 @@ export async function getApplications(filters?: {
   sort?: string;
   order?: string;
   page?: number;
+  perPage?: number | "all";
 }) {
   const user = await requireUser();
 
   const page = filters?.page || 1;
-  const skip = (page - 1) * ITEMS_PER_PAGE;
+  const perPage = filters?.perPage;
+  const isShowAll = perPage === "all";
+  const itemsPerPage = isShowAll ? undefined : (typeof perPage === "number" ? perPage : DEFAULT_ITEMS_PER_PAGE);
+  const skip = isShowAll ? undefined : (page - 1) * (itemsPerPage || DEFAULT_ITEMS_PER_PAGE);
 
   const where: Prisma.ApplicationWhereInput = {
     userId: user.id,
@@ -103,7 +107,7 @@ export async function getApplications(filters?: {
       },
       orderBy,
       skip,
-      take: ITEMS_PER_PAGE,
+      take: itemsPerPage,
     }),
     db.application.count({ where }),
   ]);
@@ -111,8 +115,9 @@ export async function getApplications(filters?: {
   return {
     applications,
     total,
-    totalPages: Math.ceil(total / ITEMS_PER_PAGE),
-    currentPage: page,
+    totalPages: isShowAll ? 1 : Math.ceil(total / (itemsPerPage || DEFAULT_ITEMS_PER_PAGE)),
+    currentPage: isShowAll ? 1 : page,
+    perPage: isShowAll ? "all" as const : (itemsPerPage || DEFAULT_ITEMS_PER_PAGE),
   };
 }
 

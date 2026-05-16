@@ -18,6 +18,7 @@ type SearchParams = {
   sort?: string;
   order?: string;
   page?: string;
+  perPage?: string;
 };
 
 type Props = {
@@ -27,11 +28,13 @@ type Props = {
 export default async function CompaniesPage({ searchParams }: Props) {
   const params = await searchParams;
   const currentPage = params.page ? parseInt(params.page, 10) : 1;
+  const perPage = params.perPage === "all" ? "all" : (params.perPage ? parseInt(params.perPage, 10) : 10);
 
-  const { companies, total, totalPages } = await getCompanies({
+  const { companies, total, totalPages, perPage: currentPerPage } = await getCompanies({
     sort: params.sort,
     order: params.order,
     page: currentPage,
+    perPage,
   });
 
   return (
@@ -143,7 +146,9 @@ export default async function CompaniesPage({ searchParams }: Props) {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
+            total={total}
             basePath="/companies"
+            perPage={currentPerPage}
           />
         </>
       )}

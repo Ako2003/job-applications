@@ -52,6 +52,7 @@ type SearchParams = {
   sort?: string;
   order?: string;
   page?: string;
+  perPage?: string;
 };
 
 type Props = {
@@ -61,6 +62,7 @@ type Props = {
 export default async function ApplicationsPage({ searchParams }: Props) {
   const params = await searchParams;
   const currentPage = params.page ? parseInt(params.page, 10) : 1;
+  const perPage = params.perPage === "all" ? "all" : (params.perPage ? parseInt(params.perPage, 10) : 10);
 
   const [applicationsData, companies, cvTemplates] = await Promise.all([
     getApplications({
@@ -72,12 +74,13 @@ export default async function ApplicationsPage({ searchParams }: Props) {
       sort: params.sort,
       order: params.order,
       page: currentPage,
+      perPage,
     }),
     getCompaniesForSelect(),
     getCvTemplatesForSelect(),
   ]);
 
-  const { applications, total, totalPages } = applicationsData;
+  const { applications, total, totalPages, perPage: currentPerPage } = applicationsData;
 
   return (
     <div className="space-y-6">
@@ -239,7 +242,9 @@ export default async function ApplicationsPage({ searchParams }: Props) {
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
+            total={total}
             basePath="/applications"
+            perPage={currentPerPage}
           />
         </>
       )}
