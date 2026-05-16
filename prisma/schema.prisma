@@ -111,6 +111,7 @@ model User {
   cvTemplates  CVTemplate[]
   contacts     Contact[]
   documents    Document[]
+  jobPlatformSalaries JobPlatformSalary[]
 }
 
 // ---------- Domain ----------
@@ -266,4 +267,28 @@ model Document {
   applications Application[]
 
   @@index([userId, type])
+}
+
+// ---------- Job Platform Salary Info ----------
+// Track salary ranges by country and job platform
+
+model JobPlatformSalary {
+  id       String @id @default(cuid())
+  userId   String
+
+  country      String  // e.g., "Germany", "Netherlands", "USA"
+  platform     String  // e.g., "LinkedIn", "Indeed", "Stepstone"
+  url          String? // URL to the platform or specific job listing
+  salaryMinAnnual Int?     // Gross annual salary minimum (in currency minor units)
+  salaryMaxAnnual Int?     // Gross annual salary maximum (in currency minor units)
+  currency     String  @default("EUR") // ISO 4217 currency code
+  notes        String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, country])
 }

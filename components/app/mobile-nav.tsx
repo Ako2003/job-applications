@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   BarChart3,
+  DollarSign,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/companies", label: "Companies", icon: Building2 },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/cvs", label: "CVs", icon: Files },
+  { href: "/salary-info", label: "Salary Info", icon: DollarSign },
   { href: "/documents", label: "Documents", icon: FileStack },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
