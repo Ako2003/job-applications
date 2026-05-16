@@ -111,6 +111,8 @@ model User {
   cvTemplates  CVTemplate[]
   contacts     Contact[]
   documents    Document[]
+  cvProfile    CVProfile?
+  jobPlatformSalaries JobPlatformSalary[]
 }
 
 // ---------- Domain ----------
@@ -266,4 +268,84 @@ model Document {
   applications Application[]
 
   @@index([userId, type])
+}
+
+// ---------- CV Builder ----------
+// Master profile stores all static CV data (one per user)
+// CV variations only customize the experience section
+
+model CVProfile {
+  id     String @id @default(cuid())
+  userId String @unique // One profile per user
+
+  // Personal Information
+  fullName String
+  tagline  String? // "Experienced Software Engineer..."
+  email    String
+  phone    String?
+  location String? // "Nürnberg, Germany"
+  photoUrl String? // URL or base64 for the profile photo
+
+  // Professional Summary
+  summary String? @db.Text
+
+  // Static sections stored as JSON
+  highlights       Json? // string[]
+  technicalSkills  Json? // { skills: string }[] - each row is a bullet
+  experience       Json? // { id, title, company, startDate, endDate, current, bullets }[] - master experience
+  education        Json? // { degree, institution, location, startYear, endYear }[]
+  certifications   Json? // { name, issuer, year, topics }[]
+  achievements     Json? // { title, date }[]
+  languageSkills   Json? // { language, level }[]
+  featuredProjects Json? // { name, techStack, bullets, liveUrl, githubUrl }[]
+  references       Json? // { name, title, company, phone, email }[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  variations CVVariation[]
+}
+
+// CV Variation - customizes experience bullets for specific job applications
+model CVVariation {
+  id        String   @id @default(cuid())
+  profileId String
+  name      String   // "Frontend Role - Company X", "Full-stack - Startup Y"
+  language  Language @default(EN)
+
+  // Only the experience section is customizable per variation
+  // Each entry references a master experience by id and overrides bullets
+  experience Json? // { masterId: string, title: string, company: string, startDate: string, endDate?: string, bullets: string[] }[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile CVProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+// ---------- Job Platform Salary Info ----------
+// Track salary ranges by country and job platform
+
+model JobPlatformSalary {
+  id       String @id @default(cuid())
+  userId   String
+
+  country      String  // e.g., "Germany", "Netherlands", "USA"
+  platform     String  // e.g., "LinkedIn", "Indeed", "Stepstone"
+  url          String? // URL to the platform or specific job listing
+  salaryMinAnnual Int?     // Gross annual salary minimum (in currency minor units)
+  salaryMaxAnnual Int?     // Gross annual salary maximum (in currency minor units)
+  currency     String  @default("EUR") // ISO 4217 currency code
+  notes        String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, country])
 }
