@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, Building2, ExternalLink } from "lucide-react";
+import { Plus, Building2, ExternalLink, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,14 +11,17 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { getCompanies } from "@/lib/actions/company";
+import { getApplicationsAppliedToday } from "@/lib/actions/application";
 import { SortableHeader } from "@/components/app/sortable-header";
 import { Pagination } from "@/components/app/pagination";
+import { SearchBar } from "./search-bar";
 
 type SearchParams = {
   sort?: string;
   order?: string;
   page?: string;
   perPage?: string;
+  search?: string;
 };
 
 type Props = {
@@ -30,12 +33,18 @@ export default async function CompaniesPage({ searchParams }: Props) {
   const currentPage = params.page ? parseInt(params.page, 10) : 1;
   const perPage = params.perPage === "all" ? "all" : (params.perPage ? parseInt(params.perPage, 10) : 10);
 
-  const { companies, total, totalPages, perPage: currentPerPage } = await getCompanies({
-    sort: params.sort,
-    order: params.order,
-    page: currentPage,
-    perPage,
-  });
+  const [companiesData, appliedToday] = await Promise.all([
+    getCompanies({
+      sort: params.sort,
+      order: params.order,
+      page: currentPage,
+      perPage,
+      search: params.search,
+    }),
+    getApplicationsAppliedToday(),
+  ]);
+
+  const { companies, total, totalPages, perPage: currentPerPage } = companiesData;
 
   return (
     <div className="space-y-6">
@@ -51,13 +60,22 @@ export default async function CompaniesPage({ searchParams }: Props) {
             Manage companies you&apos;ve applied to
           </p>
         </div>
-        <Button asChild>
-          <Link href="/companies/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Add Company
-          </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm">
+            <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Applied today:</span>
+            <Badge variant="secondary">{appliedToday}</Badge>
+          </div>
+          <Button asChild>
+            <Link href="/companies/new">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Company
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      <SearchBar />
 
       {companies.length === 0 && total === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12">

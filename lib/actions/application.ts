@@ -121,6 +121,26 @@ export async function getApplications(filters?: {
   };
 }
 
+export async function getApplicationsAppliedToday() {
+  const user = await requireUser();
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  return db.application.count({
+    where: {
+      userId: user.id,
+      appliedAt: {
+        gte: today,
+        lt: tomorrow,
+      },
+    },
+  });
+}
+
 export async function getApplication(id: string) {
   const user = await requireUser();
 

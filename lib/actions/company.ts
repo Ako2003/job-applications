@@ -17,6 +17,7 @@ export async function getCompanies(options?: {
   order?: string;
   page?: number;
   perPage?: number | "all";
+  search?: string;
 }) {
   const user = await requireUser();
 
@@ -25,6 +26,19 @@ export async function getCompanies(options?: {
   const isShowAll = perPage === "all";
   const itemsPerPage = isShowAll ? undefined : (typeof perPage === "number" ? perPage : DEFAULT_ITEMS_PER_PAGE);
   const skip = isShowAll ? undefined : (page - 1) * (itemsPerPage || DEFAULT_ITEMS_PER_PAGE);
+
+  const where: Prisma.CompanyWhereInput = {
+    userId: user.id,
+  };
+
+  if (options?.search) {
+    where.OR = [
+      { name: { contains: options.search, mode: "insensitive" } },
+      { industry: { contains: options.search, mode: "insensitive" } },
+      { hqCity: { contains: options.search, mode: "insensitive" } },
+      { hqCountry: { contains: options.search, mode: "insensitive" } },
+    ];
+  }
 
   // Build orderBy based on sort param
   const sortOrder: "asc" | "desc" = options?.order === "desc" ? "desc" : "asc";
@@ -50,7 +64,7 @@ export async function getCompanies(options?: {
 
   const [companies, total] = await Promise.all([
     db.company.findMany({
-      where: { userId: user.id },
+      where,
       select: {
         id: true,
         name: true,
@@ -68,7 +82,7 @@ export async function getCompanies(options?: {
       skip,
       take: itemsPerPage,
     }),
-    db.company.count({ where: { userId: user.id } }),
+    db.company.count({ where }),
   ]);
 
   return {
