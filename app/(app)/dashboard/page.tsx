@@ -6,6 +6,7 @@ import {
   Trophy,
   Clock,
   ArrowRight,
+  CalendarCheck,
 } from "lucide-react";
 import {
   Card,
@@ -26,6 +27,7 @@ import {
   getRecentApplications,
   getApplicationsByCountry,
 } from "@/lib/actions/dashboard";
+import { getApplicationsAppliedToday } from "@/lib/actions/application";
 import { requireUser } from "@/lib/auth";
 import { SOURCE_OPTIONS } from "@/lib/validation/application";
 import { FunnelChart } from "./funnel-chart";
@@ -56,6 +58,7 @@ export default async function DashboardPage() {
     timeToResponse,
     recentApplications,
     countryData,
+    appliedToday,
   ] = await Promise.all([
     getDashboardStats(),
     getFunnelData(),
@@ -65,6 +68,7 @@ export default async function DashboardPage() {
     getTimeToFirstResponse(),
     getRecentApplications(),
     getApplicationsByCountry(),
+    getApplicationsAppliedToday(),
   ]);
 
   return (
@@ -83,7 +87,22 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+        <Card className="relative overflow-hidden">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-4 rounded-full bg-chart-2/10" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              Applied Today
+            </CardTitle>
+            <div className="rounded-lg bg-chart-2/10 p-2">
+              <CalendarCheck className="h-4 w-4 text-chart-2" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{appliedToday}</div>
+          </CardContent>
+        </Card>
+
         <Card className="relative overflow-hidden">
           <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-4 rounded-full bg-primary/10" />
           <CardHeader className="flex flex-row items-center justify-between pb-2">

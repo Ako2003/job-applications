@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Plus, FileText, ChevronRight } from "lucide-react";
+import { Plus, FileText, ChevronRight, CalendarCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -15,6 +15,7 @@ import {
   getApplications,
   getCompaniesForSelect,
   getCvTemplatesForSelect,
+  getApplicationsAppliedToday,
 } from "@/lib/actions/application";
 import {
   SOURCE_OPTIONS,
@@ -64,7 +65,7 @@ export default async function ApplicationsPage({ searchParams }: Props) {
   const currentPage = params.page ? parseInt(params.page, 10) : 1;
   const perPage = params.perPage === "all" ? "all" : (params.perPage ? parseInt(params.perPage, 10) : 10);
 
-  const [applicationsData, companies, cvTemplates] = await Promise.all([
+  const [applicationsData, companies, cvTemplates, appliedToday] = await Promise.all([
     getApplications({
       status: params.status,
       source: params.source,
@@ -78,6 +79,7 @@ export default async function ApplicationsPage({ searchParams }: Props) {
     }),
     getCompaniesForSelect(),
     getCvTemplatesForSelect(),
+    getApplicationsAppliedToday(),
   ]);
 
   const { applications, total, totalPages, perPage: currentPerPage } = applicationsData;
@@ -96,12 +98,19 @@ export default async function ApplicationsPage({ searchParams }: Props) {
             Track your job applications
           </p>
         </div>
-        <Button asChild className="w-full sm:w-auto">
-          <Link href="/applications/new">
-            <Plus className="mr-2 h-4 w-4" />
-            New Application
-          </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 text-sm">
+            <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">Applied today:</span>
+            <Badge variant="secondary">{appliedToday}</Badge>
+          </div>
+          <Button asChild className="w-full sm:w-auto">
+            <Link href="/applications/new">
+              <Plus className="mr-2 h-4 w-4" />
+              New Application
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <Suspense fallback={<div className="h-[52px]" />}>
