@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,8 +42,20 @@ function formatDateForInput(date: Date): string {
   return new Date(date).toISOString().split("T")[0];
 }
 
+function isKnownPlatform(platform: string): boolean {
+  return PLAN_PLATFORM_OPTIONS.some((opt) => opt.value === platform);
+}
+
 export function PlanForm({ plan }: Props) {
   const isEditing = !!plan;
+
+  // Determine if the existing platform is a known option or custom
+  const existingIsCustom = plan?.platform && !isKnownPlatform(plan.platform);
+  const initialPlatform = existingIsCustom ? "Other" : (plan?.platform || "");
+  const initialCustomPlatform = existingIsCustom ? plan.platform : "";
+
+  const [selectedPlatform, setSelectedPlatform] = useState(initialPlatform);
+  const [customPlatform, setCustomPlatform] = useState(initialCustomPlatform);
 
   const action = isEditing
     ? updateApplicationPlan.bind(null, plan.id)
@@ -54,6 +66,17 @@ export function PlanForm({ plan }: Props) {
     FormData
   >(action, {});
 
+  const handlePlatformChange = (value: string | null) => {
+    if (!value) return;
+    setSelectedPlatform(value);
+    if (value !== "Other") {
+      setCustomPlatform("");
+    }
+  };
+
+  // Get the actual platform value to submit
+  const platformValue = selectedPlatform === "Other" ? customPlatform : selectedPlatform;
+
   return (
     <form action={formAction} className="space-y-6">
       {state.error && (
@@ -61,6 +84,9 @@ export function PlanForm({ plan }: Props) {
           {state.error}
         </div>
       )}
+
+      {/* Hidden input for the actual platform value */}
+      <input type="hidden" name="platform" value={platformValue} />
 
       <div className="grid gap-6 sm:grid-cols-2">
         <div className="space-y-2">
@@ -85,8 +111,8 @@ export function PlanForm({ plan }: Props) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="platform">Platform *</Label>
-          <Select name="platform" defaultValue={plan?.platform}>
+          <Label htmlFor="platformSelect">Platform *</Label>
+          <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select platform" />
             </SelectTrigger>
@@ -98,6 +124,15 @@ export function PlanForm({ plan }: Props) {
               ))}
             </SelectContent>
           </Select>
+          {selectedPlatform === "Other" && (
+            <Input
+              placeholder="Enter platform name"
+              value={customPlatform}
+              onChange={(e) => setCustomPlatform(e.target.value)}
+              className="mt-2"
+              required
+            />
+          )}
           {state.fieldErrors?.platform && (
             <p className="text-sm text-destructive">
               {state.fieldErrors.platform[0]}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useState, useActionState } from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,8 +53,20 @@ type Props = {
   onSuccess?: () => void;
 };
 
+function isKnownPlatform(platform: string): boolean {
+  return PLATFORM_OPTIONS.some((opt) => opt.value === platform);
+}
+
 export function JobPlatformSalaryForm({ entry, onSuccess }: Props) {
   const isEditing = !!entry?.id;
+
+  // Determine if the existing platform is a known option or custom
+  const existingIsCustom = entry?.platform && !isKnownPlatform(entry.platform);
+  const initialPlatform = existingIsCustom ? "Other" : (entry?.platform || "");
+  const initialCustomPlatform = existingIsCustom ? entry.platform : "";
+
+  const [selectedPlatform, setSelectedPlatform] = useState(initialPlatform);
+  const [customPlatform, setCustomPlatform] = useState(initialCustomPlatform);
 
   const actionFn = isEditing
     ? updateJobPlatformSalary.bind(null, entry.id)
@@ -83,6 +95,17 @@ export function JobPlatformSalaryForm({ entry, onSuccess }: Props) {
     }
   };
 
+  const handlePlatformChange = (value: string | null) => {
+    if (!value) return;
+    setSelectedPlatform(value);
+    if (value !== "Other") {
+      setCustomPlatform("");
+    }
+  };
+
+  // Get the actual platform value to submit
+  const platformValue = selectedPlatform === "Other" ? customPlatform : selectedPlatform;
+
   return (
     <form action={formAction} className="space-y-4">
       {state.error && (
@@ -90,6 +113,9 @@ export function JobPlatformSalaryForm({ entry, onSuccess }: Props) {
           {state.error}
         </div>
       )}
+
+      {/* Hidden input for the actual platform value */}
+      <input type="hidden" name="platform" value={platformValue} />
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
@@ -109,8 +135,8 @@ export function JobPlatformSalaryForm({ entry, onSuccess }: Props) {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="platform">Platform *</Label>
-          <Select name="platform" defaultValue={entry?.platform || ""}>
+          <Label htmlFor="platformSelect">Platform *</Label>
+          <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
             <SelectTrigger>
               <SelectValue placeholder="Select platform" />
             </SelectTrigger>
@@ -122,6 +148,15 @@ export function JobPlatformSalaryForm({ entry, onSuccess }: Props) {
               ))}
             </SelectContent>
           </Select>
+          {selectedPlatform === "Other" && (
+            <Input
+              placeholder="Enter platform name"
+              value={customPlatform}
+              onChange={(e) => setCustomPlatform(e.target.value)}
+              className="mt-2"
+              required
+            />
+          )}
         </div>
       </div>
 
