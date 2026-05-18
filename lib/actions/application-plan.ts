@@ -9,6 +9,8 @@ import {
   transformApplicationPlanInput,
 } from "@/lib/validation/application-plan";
 
+// Application Plan Actions - manages weekly application targets by country
+
 export async function getApplicationPlans() {
   const user = await requireUser();
 
