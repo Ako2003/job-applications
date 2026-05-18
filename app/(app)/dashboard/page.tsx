@@ -28,6 +28,15 @@ import {
   getApplicationsByCountry,
 } from "@/lib/actions/dashboard";
 import { getApplicationsAppliedToday } from "@/lib/actions/application";
+import { getApplicationStatsByCountry } from "@/lib/actions/application-plan";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
 import { SOURCE_OPTIONS } from "@/lib/validation/application";
 import { FunnelChart } from "./funnel-chart";
@@ -59,6 +68,7 @@ export default async function DashboardPage() {
     recentApplications,
     countryData,
     appliedToday,
+    countryStats,
   ] = await Promise.all([
     getDashboardStats(),
     getFunnelData(),
@@ -69,6 +79,7 @@ export default async function DashboardPage() {
     getRecentApplications(),
     getApplicationsByCountry(),
     getApplicationsAppliedToday(),
+    getApplicationStatsByCountry(),
   ]);
 
   return (
@@ -338,6 +349,58 @@ export default async function DashboardPage() {
                   </div>
                 </Link>
               ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Applications by Country - Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Applications by Country (Breakdown)</CardTitle>
+          <CardDescription>
+            Weekly, monthly, and all-time application counts by country
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {countryStats.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No applications with country data yet.
+            </p>
+          ) : (
+            <div className="rounded-lg border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Country</TableHead>
+                    <TableHead className="text-center">This Week</TableHead>
+                    <TableHead className="text-center">This Month</TableHead>
+                    <TableHead className="text-center">All Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {countryStats.map((stat) => (
+                    <TableRow key={stat.country}>
+                      <TableCell className="font-medium">{stat.country}</TableCell>
+                      <TableCell className="text-center">{stat.week}</TableCell>
+                      <TableCell className="text-center">{stat.month}</TableCell>
+                      <TableCell className="text-center font-semibold">{stat.allTime}</TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="bg-muted/50 font-semibold">
+                    <TableCell>Total</TableCell>
+                    <TableCell className="text-center">
+                      {countryStats.reduce((sum, s) => sum + s.week, 0)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {countryStats.reduce((sum, s) => sum + s.month, 0)}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {countryStats.reduce((sum, s) => sum + s.allTime, 0)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>

@@ -13,6 +13,7 @@ import {
   Briefcase,
   BarChart3,
   DollarSign,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/applications", label: "Applications", icon: FileText },
   { href: "/companies", label: "Companies", icon: Building2 },
+  { href: "/application-plan", label: "Application Plan", icon: Target },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/cvs", label: "CVs", icon: Files },
   { href: "/salary-info", label: "Salary Info", icon: DollarSign },
