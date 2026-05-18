@@ -9,7 +9,49 @@ import {
   transformApplicationPlanInput,
 } from "@/lib/validation/application-plan";
 
-// Application Plan Actions - manages weekly application targets by country
+// Country name to ISO code mapping (and common variations)
+const COUNTRY_MAPPINGS: Record<string, string[]> = {
+  "Germany": ["DE", "Germany", "deutschland", "de"],
+  "Netherlands": ["NL", "Netherlands", "nl", "holland"],
+  "Austria": ["AT", "Austria", "at"],
+  "Switzerland": ["CH", "Switzerland", "ch"],
+  "Belgium": ["BE", "Belgium", "be"],
+  "Luxembourg": ["LU", "Luxembourg", "lu"],
+  "France": ["FR", "France", "fr"],
+  "UK": ["GB", "UK", "United Kingdom", "gb", "uk"],
+  "Ireland": ["IE", "Ireland", "ie"],
+  "Sweden": ["SE", "Sweden", "se"],
+  "Denmark": ["DK", "Denmark", "dk"],
+  "Norway": ["NO", "Norway", "no"],
+  "Finland": ["FI", "Finland", "fi"],
+  "Poland": ["PL", "Poland", "pl"],
+  "Czech Republic": ["CZ", "Czech Republic", "cz", "czechia"],
+  "Estonia": ["EE", "Estonia", "ee"],
+  "Spain": ["ES", "Spain", "es"],
+  "Portugal": ["PT", "Portugal", "pt"],
+  "Italy": ["IT", "Italy", "it"],
+  "USA": ["US", "USA", "United States", "us"],
+  "Canada": ["CA", "Canada", "ca"],
+  "Singapore": ["SG", "Singapore", "sg"],
+  "UAE": ["AE", "UAE", "United Arab Emirates", "ae"],
+  "Remote": ["Remote", "remote", "Worldwide"],
+};
+
+// Get all possible codes/names for a country
+function getCountryVariants(country: string): string[] {
+  const variants = COUNTRY_MAPPINGS[country];
+  if (variants) {
+    return variants.map(v => v.toLowerCase());
+  }
+  // If not in mapping, return the country itself (lowercase)
+  return [country.toLowerCase()];
+}
+
+// Check if an application country matches a plan country
+function matchesCountry(appCountry: string, planCountry: string): boolean {
+  const variants = getCountryVariants(planCountry);
+  return variants.includes(appCountry.toLowerCase());
+}
 
 export async function getApplicationPlans() {
   const user = await requireUser();
@@ -36,25 +78,17 @@ export async function getApplicationPlans() {
     },
   });
 
-  // Group applications by country
-  const appsByCountry: Record<string, { count: number; dates: Date[] }> = {};
-  for (const app of applications) {
-    if (!app.country) continue;
-    if (!appsByCountry[app.country]) {
-      appsByCountry[app.country] = { count: 0, dates: [] };
-    }
-    appsByCountry[app.country].count++;
-    appsByCountry[app.country].dates.push(app.appliedAt);
-  }
-
-  // Calculate stats for each plan
+  // Calculate stats for each plan by matching applications to plan countries
   const now = new Date();
   const plansWithStats = plans.map((plan) => {
-    const countryApps = appsByCountry[plan.country] || { count: 0, dates: [] };
+    // Find all applications that match this plan's country
+    const matchingApps = applications.filter(
+      (app) => app.country && matchesCountry(app.country, plan.country)
+    );
 
     // Count applications since plan started
-    const totalApplications = countryApps.dates.filter(
-      (date) => date >= plan.startedAt
+    const totalApplications = matchingApps.filter(
+      (app) => app.appliedAt >= plan.startedAt
     ).length;
 
     // Calculate weeks since started
