@@ -12,39 +12,63 @@ import {
 export async function getApplicationPlans() {
   const user = await requireUser();
 
+  // Get all plans
   const plans = await db.applicationPlan.findMany({
     where: { userId: user.id },
     orderBy: [{ isActive: "desc" }, { country: "asc" }],
   });
 
-  // For each plan, calculate the actual applications sent and duration
-  const plansWithStats = await Promise.all(
-    plans.map(async (plan) => {
-      // Count applications to this country since the plan started
-      const totalApplications = await db.application.count({
-        where: {
-          userId: user.id,
-          country: plan.country,
-          appliedAt: { gte: plan.startedAt },
-        },
-      });
+  if (plans.length === 0) {
+    return [];
+  }
 
-      // Calculate weeks since started
-      const now = new Date();
-      const diffTime = Math.abs(now.getTime() - plan.startedAt.getTime());
-      const diffWeeks = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7)));
+  // Get all applications with country in a single query
+  const applications = await db.application.findMany({
+    where: {
+      userId: user.id,
+      country: { not: null },
+    },
+    select: {
+      country: true,
+      appliedAt: true,
+    },
+  });
 
-      // Calculate actual apps per week
-      const actualAppsPerWeek = Math.round((totalApplications / diffWeeks) * 10) / 10;
+  // Group applications by country
+  const appsByCountry: Record<string, { count: number; dates: Date[] }> = {};
+  for (const app of applications) {
+    if (!app.country) continue;
+    if (!appsByCountry[app.country]) {
+      appsByCountry[app.country] = { count: 0, dates: [] };
+    }
+    appsByCountry[app.country].count++;
+    appsByCountry[app.country].dates.push(app.appliedAt);
+  }
 
-      return {
-        ...plan,
-        totalApplications,
-        weeksActive: diffWeeks,
-        actualAppsPerWeek,
-      };
-    })
-  );
+  // Calculate stats for each plan
+  const now = new Date();
+  const plansWithStats = plans.map((plan) => {
+    const countryApps = appsByCountry[plan.country] || { count: 0, dates: [] };
+
+    // Count applications since plan started
+    const totalApplications = countryApps.dates.filter(
+      (date) => date >= plan.startedAt
+    ).length;
+
+    // Calculate weeks since started
+    const diffTime = Math.abs(now.getTime() - plan.startedAt.getTime());
+    const diffWeeks = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24 * 7)));
+
+    // Calculate actual apps per week
+    const actualAppsPerWeek = Math.round((totalApplications / diffWeeks) * 10) / 10;
+
+    return {
+      ...plan,
+      totalApplications,
+      weeksActive: diffWeeks,
+      actualAppsPerWeek,
+    };
+  });
 
   return plansWithStats;
 }
