@@ -31,6 +31,7 @@ export function RejectionsBySourceChart({ data }: RejectionsBySourceChartProps) 
           tick={{ fill: "var(--color-muted-foreground)", fontSize: 12 }}
         />
         <Tooltip
+          cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }}
           contentStyle={{
             backgroundColor: "var(--color-popover)",
             border: "1px solid var(--color-border)",
@@ -42,6 +43,8 @@ export function RejectionsBySourceChart({ data }: RejectionsBySourceChartProps) 
             if (name === "rejected") return [`${value}`, "Rejected"];
             return [value, name];
           }}
+          labelStyle={{ color: "var(--color-popover-foreground)" }}
+          itemStyle={{ color: "var(--color-popover-foreground)" }}
         />
         <Legend
           formatter={(value) => {

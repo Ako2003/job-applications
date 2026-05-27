@@ -30,6 +30,7 @@ import {
   EVENT_TYPE_OPTIONS,
 } from "@/lib/validation/application";
 import { LANGUAGE_OPTIONS } from "@/lib/validation/cv-template";
+import { getCountryLabel } from "@/lib/utils/countries";
 import { StatusSelect } from "../status-select";
 import { DeleteApplicationButton } from "./delete-button";
 import { DuplicateButton } from "./duplicate-button";
@@ -246,7 +247,7 @@ export default async function ApplicationDetailPage({ params }: Props) {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Country</p>
-                  <p className="font-medium">{application.country || "—"}</p>
+                  <p className="font-medium">{getCountryLabel(application.country)}</p>
                 </div>
               </div>
 

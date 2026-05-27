@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth";
 import { SOURCE_OPTIONS } from "@/lib/validation/application";
+import { getCountryLabel } from "@/lib/utils/countries";
 import { FunnelChart } from "./funnel-chart";
 import { TimelineChart } from "./timeline-chart";
 import { ResponseRateChart } from "./response-rate-chart";
@@ -293,7 +294,12 @@ export default async function DashboardPage() {
                 No applications with country data yet.
               </p>
             ) : (
-              <CountryChart data={countryData} />
+              <CountryChart
+                data={countryData.map((d) => ({
+                  ...d,
+                  country: getCountryLabel(d.country),
+                }))}
+              />
             )}
           </CardContent>
         </Card>

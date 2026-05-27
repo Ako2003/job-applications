@@ -15,6 +15,7 @@ import {
   getApplications,
   getCompaniesForSelect,
   getCvTemplatesForSelect,
+  getCountriesForSelect,
   getApplicationsAppliedToday,
 } from "@/lib/actions/application";
 import {
@@ -49,6 +50,7 @@ type SearchParams = {
   source?: string;
   companyId?: string;
   cvTemplateId?: string;
+  country?: string;
   search?: string;
   sort?: string;
   order?: string;
@@ -65,12 +67,13 @@ export default async function ApplicationsPage({ searchParams }: Props) {
   const currentPage = params.page ? parseInt(params.page, 10) : 1;
   const perPage = params.perPage === "all" ? "all" : (params.perPage ? parseInt(params.perPage, 10) : 10);
 
-  const [applicationsData, companies, cvTemplates, appliedToday] = await Promise.all([
+  const [applicationsData, companies, cvTemplates, countries, appliedToday] = await Promise.all([
     getApplications({
       status: params.status,
       source: params.source,
       companyId: params.companyId,
       cvTemplateId: params.cvTemplateId,
+      country: params.country,
       search: params.search,
       sort: params.sort,
       order: params.order,
@@ -79,6 +82,7 @@ export default async function ApplicationsPage({ searchParams }: Props) {
     }),
     getCompaniesForSelect(),
     getCvTemplatesForSelect(),
+    getCountriesForSelect(),
     getApplicationsAppliedToday(),
   ]);
 
@@ -114,7 +118,11 @@ export default async function ApplicationsPage({ searchParams }: Props) {
       </div>
 
       <Suspense fallback={<div className="h-[52px]" />}>
-        <Filters companies={companies} cvTemplates={cvTemplates} />
+        <Filters
+          companies={companies}
+          cvTemplates={cvTemplates}
+          countries={countries}
+        />
       </Suspense>
 
       {applications.length === 0 && total === 0 ? (

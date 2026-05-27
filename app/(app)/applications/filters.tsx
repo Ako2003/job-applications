@@ -17,6 +17,7 @@ import {
   APPLICATION_STATUS_OPTIONS,
   SOURCE_OPTIONS,
 } from "@/lib/validation/application";
+import { getCountryLabel } from "@/lib/utils/countries";
 
 type Company = {
   id: string;
@@ -28,12 +29,18 @@ type CvTemplate = {
   name: string;
 };
 
+type Country = {
+  code: string;
+  count: number;
+};
+
 type FiltersProps = {
   companies: Company[];
   cvTemplates: CvTemplate[];
+  countries: Country[];
 };
 
-export function Filters({ companies, cvTemplates }: FiltersProps) {
+export function Filters({ companies, cvTemplates, countries }: FiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -42,10 +49,16 @@ export function Filters({ companies, cvTemplates }: FiltersProps) {
   const currentSource = searchParams.get("source") || "";
   const currentCompany = searchParams.get("companyId") || "";
   const currentCv = searchParams.get("cvTemplateId") || "";
+  const currentCountry = searchParams.get("country") || "";
   const currentSearch = searchParams.get("search") || "";
 
   const hasFilters =
-    currentStatus || currentSource || currentCompany || currentCv || currentSearch;
+    currentStatus ||
+    currentSource ||
+    currentCompany ||
+    currentCv ||
+    currentCountry ||
+    currentSearch;
 
   const companyOptions: ComboboxOption[] = [
     { value: "", label: "All companies" },
@@ -60,6 +73,14 @@ export function Filters({ companies, cvTemplates }: FiltersProps) {
     ...cvTemplates.map((cv) => ({
       value: cv.id,
       label: cv.name,
+    })),
+  ];
+
+  const countryOptions: ComboboxOption[] = [
+    { value: "", label: "All countries" },
+    ...countries.map((country) => ({
+      value: country.code,
+      label: `${getCountryLabel(country.code)} (${country.count})`,
     })),
   ];
 
@@ -174,6 +195,20 @@ export function Filters({ companies, cvTemplates }: FiltersProps) {
             placeholder="All CVs"
             searchPlaceholder="Search CVs..."
             emptyText="No CVs found."
+            disabled={isPending}
+            className="w-[150px]"
+          />
+        )}
+
+        {/* Country filter */}
+        {countries.length > 0 && (
+          <Combobox
+            options={countryOptions}
+            value={currentCountry}
+            onValueChange={(value) => updateFilter("country", value)}
+            placeholder="All countries"
+            searchPlaceholder="Search countries..."
+            emptyText="No countries found."
             disabled={isPending}
             className="w-[150px]"
           />

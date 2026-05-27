@@ -20,6 +20,7 @@ export async function getApplications(filters?: {
   source?: string;
   companyId?: string;
   cvTemplateId?: string;
+  country?: string;
   search?: string;
   sort?: string;
   order?: string;
@@ -49,6 +50,9 @@ export async function getApplications(filters?: {
   }
   if (filters?.cvTemplateId) {
     where.cvTemplateId = filters.cvTemplateId;
+  }
+  if (filters?.country) {
+    where.country = filters.country;
   }
   if (filters?.search) {
     where.OR = [
@@ -578,6 +582,22 @@ export async function getCompaniesForSelect() {
     },
     orderBy: { name: "asc" },
   });
+}
+
+// Get distinct country codes the user has applied to (for the country filter)
+export async function getCountriesForSelect() {
+  const user = await requireUser();
+
+  const rows = await db.application.groupBy({
+    by: ["country"],
+    where: { userId: user.id, country: { not: null } },
+    _count: { id: true },
+    orderBy: { _count: { id: "desc" } },
+  });
+
+  return rows
+    .filter((row) => row.country)
+    .map((row) => ({ code: row.country as string, count: row._count.id }));
 }
 
 // Get CV templates for select dropdown
