@@ -5,6 +5,9 @@ import {
   PieChart as PieChartIcon,
   BarChart3,
   AlertCircle,
+  Users,
+  Trophy,
+  Globe,
 } from "lucide-react";
 import {
   Card,
@@ -25,6 +28,7 @@ import {
   getRejectionsOverTime,
   getRecentRejections,
   getApplicationsNeedingRejectionInfo,
+  getInterviewAnalytics,
 } from "@/lib/actions/analytics";
 import { SOURCE_OPTIONS } from "@/lib/validation/application";
 import { RejectionReasonsChart } from "./rejection-reasons-chart";
@@ -32,6 +36,8 @@ import { RejectionStagesChart } from "./rejection-stages-chart";
 import { TimeToRejectionChart } from "./time-to-rejection-chart";
 import { RejectionsTimelineChart } from "./rejections-timeline-chart";
 import { RejectionsBySourceChart } from "./rejections-by-source-chart";
+import { InterviewFunnelChart } from "./interview-funnel-chart";
+import { CountryBreakdownTable } from "./country-breakdown-table";
 
 function formatDate(date: Date | null): string {
   if (!date) return "—";
@@ -57,6 +63,7 @@ export default async function AnalyticsPage() {
     rejectionsOverTime,
     recentRejections,
     needingInfo,
+    interview,
   ] = await Promise.all([
     getRejectionStats(),
     getRejectionReasons(),
@@ -67,6 +74,7 @@ export default async function AnalyticsPage() {
     getRejectionsOverTime(),
     getRecentRejections(),
     getApplicationsNeedingRejectionInfo(),
+    getInterviewAnalytics(),
   ]);
 
   return (
@@ -76,7 +84,8 @@ export default async function AnalyticsPage() {
           Analytics
         </h1>
         <p className="text-muted-foreground">
-          Understand your application patterns and rejection insights
+          Understand your application patterns, interview progress, and
+          rejection insights
         </p>
       </div>
 
@@ -139,6 +148,83 @@ export default async function AnalyticsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Interview pipeline */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Interview Pipeline</CardTitle>
+            <CardDescription>
+              How far your applications progress (based on recorded events)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {interview.summary.applied === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No applications recorded yet.
+              </p>
+            ) : (
+              <InterviewFunnelChart data={interview.funnel} />
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-3 lg:grid-cols-1">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Interviewed</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{interview.summary.interviewed}</div>
+              <p className="text-xs text-muted-foreground">
+                {interview.summary.interviewRate}% of applications
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Offers</CardTitle>
+              <Trophy className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{interview.summary.offers}</div>
+              <p className="text-xs text-muted-foreground">
+                {interview.summary.offerRate}% of applications
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Active</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{interview.summary.active}</div>
+              <p className="text-xs text-muted-foreground">In progress</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Applications by country */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5 text-muted-foreground" />
+            Outcomes by Country
+          </CardTitle>
+          <CardDescription>
+            Applications, interviews, and outcomes broken down by country. Click
+            a country to see its applications.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CountryBreakdownTable data={interview.byCountry} />
+        </CardContent>
+      </Card>
 
       {/* Missing info alert */}
       {needingInfo.length > 0 && (

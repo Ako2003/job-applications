@@ -40,6 +40,7 @@ export function RejectionsTimelineChart({ data }: RejectionsTimelineChartProps) 
         />
         <YAxis allowDecimals={false} />
         <Tooltip
+          cursor={{ fill: "hsl(var(--muted))", opacity: 0.5 }}
           contentStyle={{
             backgroundColor: "var(--color-popover)",
             border: "1px solid var(--color-border)",

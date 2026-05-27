@@ -276,6 +276,136 @@ export async function getRecentRejections() {
   });
 }
 
+// Event-history-based interview funnel + per-country outcome breakdown.
+// An application "reached" a stage if it EVER recorded an event for that stage,
+// even if it was later rejected or ghosted — so the funnel reflects how far each
+// application actually progressed, not just its current cached status.
+export async function getInterviewAnalytics() {
+  const user = await requireUser();
+
+  const apps = await db.application.findMany({
+    where: { userId: user.id },
+    select: {
+      status: true,
+      country: true,
+      events: { select: { type: true } },
+    },
+  });
+
+  const SCREENING_EVENTS = new Set(["SCREENING_SCHEDULED", "SCREENING_DONE"]);
+  const INTERVIEW_EVENTS = new Set([
+    "INTERVIEW_SCHEDULED",
+    "INTERVIEW_DONE",
+    "TECHNICAL_TASK_RECEIVED",
+    "TECHNICAL_TASK_SUBMITTED",
+  ]);
+  const OFFER_EVENTS = new Set([
+    "OFFER_RECEIVED",
+    "OFFER_NEGOTIATING",
+    "OFFER_ACCEPTED",
+  ]);
+  const ACTIVE_STATUSES = new Set([
+    "APPLIED",
+    "SCREENING",
+    "PHONE_INTERVIEW",
+    "TECHNICAL_INTERVIEW",
+    "ONSITE_FINAL",
+  ]);
+
+  type Agg = {
+    total: number;
+    applied: number;
+    active: number;
+    screening: number;
+    interview: number;
+    offer: number;
+    rejected: number;
+    ghosted: number;
+    withdrawn: number;
+  };
+  const emptyAgg = (): Agg => ({
+    total: 0,
+    applied: 0,
+    active: 0,
+    screening: 0,
+    interview: 0,
+    offer: 0,
+    rejected: 0,
+    ghosted: 0,
+    withdrawn: 0,
+  });
+
+  const overall = emptyAgg();
+  const byCountryMap = new Map<string, Agg>();
+
+  for (const app of apps) {
+    const everScreening = app.events.some((e) => SCREENING_EVENTS.has(e.type));
+    const everInterview = app.events.some((e) => INTERVIEW_EVENTS.has(e.type));
+    const everOffer =
+      app.events.some((e) => OFFER_EVENTS.has(e.type)) || app.status === "OFFER";
+    // Make the funnel monotonic: reaching a later stage implies the earlier ones.
+    const reachedInterview = everInterview || everOffer;
+    const reachedScreening = everScreening || reachedInterview;
+    const isDraft = app.status === "DRAFT";
+
+    const tally = (a: Agg) => {
+      a.total++;
+      if (!isDraft) a.applied++;
+      if (reachedScreening) a.screening++;
+      if (reachedInterview) a.interview++;
+      if (everOffer) a.offer++;
+      if (app.status === "REJECTED") a.rejected++;
+      else if (app.status === "GHOSTED") a.ghosted++;
+      else if (app.status === "WITHDRAWN") a.withdrawn++;
+      else if (ACTIVE_STATUSES.has(app.status)) a.active++;
+    };
+
+    tally(overall);
+    if (app.country) {
+      let c = byCountryMap.get(app.country);
+      if (!c) {
+        c = emptyAgg();
+        byCountryMap.set(app.country, c);
+      }
+      tally(c);
+    }
+  }
+
+  const rate = (n: number, d: number) => (d > 0 ? Math.round((n / d) * 100) : 0);
+
+  const byCountry = Array.from(byCountryMap.entries())
+    .map(([country, a]) => ({
+      country,
+      total: a.total,
+      active: a.active,
+      interviewed: a.interview,
+      offers: a.offer,
+      rejected: a.rejected,
+      ghosted: a.ghosted,
+      interviewRate: rate(a.interview, a.total),
+      offerRate: rate(a.offer, a.total),
+    }))
+    .sort((x, y) => y.total - x.total);
+
+  return {
+    funnel: [
+      { stage: "Applied", count: overall.applied },
+      { stage: "Screening", count: overall.screening },
+      { stage: "Interview", count: overall.interview },
+      { stage: "Offer", count: overall.offer },
+    ],
+    summary: {
+      applied: overall.applied,
+      active: overall.active,
+      interviewed: overall.interview,
+      offers: overall.offer,
+      interviewRate: rate(overall.interview, overall.applied),
+      offerRate: rate(overall.offer, overall.applied),
+    },
+    byCountry,
+  };
+}
+
 export async function getApplicationsNeedingRejectionInfo() {
   const user = await requireUser();
 
